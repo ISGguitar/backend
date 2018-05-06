@@ -130,20 +130,30 @@ router.put('/user/profile', userAuthorised, (req, res, next) => {
 });
 
 router.post('/user/changepassword', userAuthorised, (req, res, next) => {
-	
-	let userJSON = {
-		email : req.params.email,
-		oldPassword : req.body.oldPassword,
-		newPassword : req.body.newPassword
-	}
-	console.log(userJSON)
 
-	user.changePassword(userJSON).then((result) => {
-		if (!result) {
-			resHandler.sendError(res, `Bad credential or something went wrong: ${req.params.email}`);
-		} else {
-			resHandler.sendOk(res, result);
-		}
+	session.userLogged(req.session.id).then((result) => {
+		user.getUser(result).then((result) => {
+		
+			let userJSON = {
+				email : result.email,
+				oldPassword : req.body.oldPassword,
+				newPassword : req.body.newPassword
+			}
+
+			console.log(userJSON)
+
+			user.changePassword(userJSON).then((result) => {
+				if (!result) {
+					resHandler.sendError(res, `Bad credential or something went wrong: ${req.params.email}`);
+				} else {
+					resHandler.sendOk(res, result);
+				}
+			}).catch((err) => {
+				resHandler.sendError(res, err);
+			});
+		}).catch((err) => {
+			resHandler.sendError(res, err);
+		});
 	}).catch((err) => {
 		resHandler.sendError(res, err);
 	});
